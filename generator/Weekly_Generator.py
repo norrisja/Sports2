@@ -11,7 +11,7 @@ from Generator import WeeklyPredictor as Predictor, Bettor
 week_num = 15
 cal = FCal(season_start_date='09-09-2021').calendar
 week_range = cal[week_num]
-
+#
 predictor = Predictor(week_num, week_range)
 predictor.run()
 
