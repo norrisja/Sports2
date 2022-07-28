@@ -1,8 +1,10 @@
 
 
 
-CREATE TABLE '{table_name}'
-'{columns}'
+CREATE TABLE ? (
+    ?
+)
+
 
 
 
