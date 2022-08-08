@@ -38,7 +38,7 @@ def dtype_converter(pydtype):
                  bool: 'BIT'
                  }
 
-    return dtype_map.get(pydtype, 'NVARCHAR(50)')
+    return dtype_map.get(pydtype, 'NVARCHAR(100)')
 
 def column_converter(columns, dtypes=None):
 
@@ -54,7 +54,6 @@ def SQL_Table_Creator(server, db, table_name, df):
     # create_table = query_opener('create_table.sql')
 
     sql_cols = column_converter(df.columns, df.dtypes)
-    print(sql_cols)
     create_table = f"""CREATE TABLE {table_name} (
                           {sql_cols}
                           )
@@ -68,13 +67,15 @@ def SQL_Table_Creator(server, db, table_name, df):
 
     SQL_Loader(server, db, table_name, df)
 
-
+def row_validator(row_values):
+    row_values = [row.replace("'", "_")[:99] if isinstance(row, str) else row for row in row_values]
+    return tuple(row_values)
 
 def row_converter(column_names, row_values):
     """ Given column name and row values, returns a sql ready statement
         to be combined with either an insert, create, or drop. """
 
-    return f"({str(', '.join(column_names))}) VALUES {tuple(row_values)}"
+    return f"({str(', '.join(column_names))}) VALUES {row_validator(row_values)}"
 
 
 def SQL_df_converter(df, table_name):
@@ -101,14 +102,17 @@ def SQL_Loader(server, db, table_name, df, params={}):
     cxnn = connect_to_db(server, db)
     cursor = cxnn.cursor()
 
-    for query in queries:
-        print(query)
-        if len(params.keys()) > 0:
-            cursor.execute(query, params)
-        else:
-            cursor.execute(query)
-    cxnn.commit()
+    try:
+        for query in queries:
+            if len(params.keys()) > 0:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
 
+        cxnn.commit()
+    except Exception as e:
+        print(query)
+        raise e
 
 
 def SQL_Puller(server, db, query_file, params={}):

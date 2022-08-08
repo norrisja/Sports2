@@ -34,8 +34,11 @@ class WeeklyPredictor:
         for game_num, event_id in enumerate(self._event_ids):
             game_df = games_df[games_df['event_id'] == event_id]
 
-            away_team = game_df.iloc[0]['source.abbreviation']
             home_team = game_df.iloc[1]['source.abbreviation']
+            away_team = game_df.iloc[0]['source.abbreviation']
+
+            home_team_name = game_df.iloc[1]['source.full_name']
+            away_team_name = game_df.iloc[0]['source.full_name']
 
             spread = spread_from_power_ratings(power_ratings_df, home_team, away_team)
 
@@ -45,26 +48,22 @@ class WeeklyPredictor:
             game_df = game_df.set_index('source.abbreviation')
 
             # Get the predicted spread from the power ratings
-            game_df.loc[away_team, 'Predicted_Spread'] = away_predicted_spread
-            game_df.loc[home_team, 'Predicted_Spread'] = home_predicted_spread
+            game_df.loc[away_team, 'predicted_spread'] = away_predicted_spread
+            game_df.loc[home_team, 'predicted_spread'] = home_predicted_spread
 
-            game_df.loc[:, 'Predicted_Win_Prob'] = game_df['Predicted_Spread'].apply(lambda x: spread_implied_prob(x))
+            game_df.loc[away_team, 'team'] = away_team_name
+            game_df.loc[home_team, 'team'] = home_team_name
+
+            game_df.loc[:, 'predicted_win_prob'] = game_df['predicted_spread'].apply(lambda x: spread_implied_prob(x))
             # game_df.loc[:, 'Predicted_ML'] = game_df['Predicted_Win_Prob_Spread'].apply(lambda x: implied_ML(x))
 
             game_df = game_df.reset_index(drop=False)
-            game_df['Game'] = game_num
-            game_df['Week'] = self.week_num
-            game_df.rename(columns={'source.abbreviation': 'Abbreviation'}, inplace=True)
-            game_df = game_df.set_index(['Week', 'Game', 'Abbreviation'])
+            game_df['game'] = game_num
+            game_df['week'] = self.week_num
+            game_df.rename(columns={'source.abbreviation': 'abbreviation'}, inplace=True)
+            game_df = game_df.set_index(['week', 'game', 'abbreviation'])
             # game_df = game_df.set_index(['Week', 'Game', 'source.abbreviation'])
 
-            # game_df['Value'] = game_df['Predicted_Win_Prob'] - game_df['Implied_Win_Prob']  # positive means there is positve value accoring to our power ratings/spread model
-            # game_df['Spread_Diff'] = pd.to_numeric(game_df['Predicted_Spread']) - pd.to_numeric(game_df['Consensus_Spread'])
-            # game_df['Spread_Percent_Diff'] = ((pd.to_numeric(game_df['Predicted_Spread']) - pd.to_numeric(game_df['Consensus_Spread'])) / pd.to_numeric(game_df['Consensus_Spread']))
-
-            # game_df['Predicted_vs_Actual_ML'] = game_df.apply(lambda x: difference_in_ML(x['Consensus_ML'], x['Predicted_ML']), axis=1) # positive means there is positve value accoring to our power ratings/spread model
-            # game_df['Predicted_vs_Spread_Implied_ML'] = game_df.apply(lambda x: difference_in_ML(x['Implied_ML_Spread'], x['Predicted_ML']), axis=1) # positive means that teams spread is a value play
-            # game_df['Predicted_vs_Spread_Implied_ML'] = (game_df['Implied_ML'] - game_df['Predicted_Prob']) / game_df['Predicted_ML']
 
             df = pd.concat([df, game_df])
 
@@ -86,11 +85,29 @@ class Bettor:
 
     def analyze_board(self, predictions):
 
-        board = pd.merge(predictions, self.games)
-        board['Implied_Win_Prob'] = board['spread spread / total'].apply(lambda x: spread_implied_prob(x))
-        board['Value'] = board['Predicted_Win_Prob'] - board['Implied_Win_Prob'] # positive means there is positve value accoring to our power ratings/spread model
+        board = pd.merge(predictions.reset_index(drop=False), self.games)
+        board['implied_win_prob'] = board['spread spread / total'].apply(lambda x: spread_implied_prob(x))
+        board['value'] = board['predicted_win_prob'] - board['implied_win_prob'] # positive means there is positve value accoring to our power ratings/spread model
 
-        print(board)
+        # game_df['Spread_Diff'] = pd.to_numeric(game_df['Predicted_Spread']) - pd.to_numeric(game_df['Consensus_Spread'])
+        # game_df['Spread_Percent_Diff'] = ((pd.to_numeric(game_df['Predicted_Spread']) - pd.to_numeric(game_df['Consensus_Spread'])) / pd.to_numeric(game_df['Consensus_Spread']))
 
+        # game_df['Predicted_vs_Actual_ML'] = game_df.apply(lambda x: difference_in_ML(x['Consensus_ML'], x['Predicted_ML']), axis=1) # positive means there is positve value accoring to our power ratings/spread model
+        # game_df['Predicted_vs_Spread_Implied_ML'] = game_df.apply(lambda x: difference_in_ML(x['Implied_ML_Spread'], x['Predicted_ML']), axis=1) # positive means that teams spread is a value play
+        # game_df['Predicted_vs_Spread_Implied_ML'] = (game_df['Implied_ML'] - game_df['Predicted_Prob']) / game_df['Predicted_ML']
 
+        board['date'] = board['datetime'].apply(lambda x: x.strftime('%m-%d-%Y'))
+        board['time'] = board['datetime'].apply(lambda x: x.strftime('%I:%M %p'))
 
+        board.reset_index(drop=False, inplace=True)
+        board = board.sort_values(['date', 'time', 'event_id', 'is_home'], ascending=[True, True, True, False])
+
+        # games = [g for g in range(int(predictions.shape[0]/2)) for _ in range(2)]
+        # board['game'] = games
+
+        board.set_index(['week', 'game', 'abbreviation'], inplace=True)
+
+        self.analyzed_board = board
+
+    def get_game(self, game_num):
+        pass
