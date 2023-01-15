@@ -55,3 +55,4 @@ def get_power_ratings(year):
     # df['power_rating'] = normalize(df['power_rating'], [-7, 7])
 
     return team_stats_df, raw_team_stats
+

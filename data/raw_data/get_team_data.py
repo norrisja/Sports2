@@ -3,6 +3,7 @@ import pandas as pd
 from sportsipy.nfl.teams import Teams
 
 def get_team_data(year):
+    """ Used to fetch new team data for the first time. Meant to be used to upload to the db and pulled from there. """
 
     df = pd.DataFrame()
     for team in Teams(year):

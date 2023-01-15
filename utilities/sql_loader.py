@@ -5,9 +5,17 @@ import pyodbc
 import pandas as pd
 import os
 
-def connect_to_db(server, database):
+from utilities._sql import server as SERVER, db as DATABASE
+
+def connect_to_db(server=None, database=None):
     """ Establishes a connection with the database. Returns a pyodbc connection object.
     Used for accessing the cursor() property to execute SQL_utils code. """
+
+    if server is None:
+        server = SERVER
+
+    if database is None:
+        database = DATABASE
 
     conn = pyodbc.connect(Trusted_Connection='Yes',
                           Driver='{ODBC Driver 17 for SQL Server}',
@@ -64,6 +72,7 @@ def SQL_Table_Creator(server, db, table_name, df):
     cursor = cxnn.cursor()
     cursor.execute(create_table)# , (table_name, sql_cols))
     cxnn.commit()
+    print(table_name + "Table successfully created.")
 
     SQL_Loader(server, db, table_name, df)
 
@@ -115,7 +124,7 @@ def SQL_Loader(server, db, table_name, df, params={}):
         raise e
 
 
-def SQL_Puller(server, db, query_file, params={}):
+def SQL_Puller(server, db, query_file, params=None):
     """ Used to pull data from a SQL database. """
 
     query = query_opener(query_file)
@@ -124,8 +133,9 @@ def SQL_Puller(server, db, query_file, params={}):
     cursor = cxnn.cursor()
 
     # SQL will throw an error if there are no params and we try to add it to the execute method
-    if len(params.keys()) > 0:
-        cursor.execute(query, params)
+    if params is not None:
+        print(query.format(params))
+        cursor.execute(query.format(params))
     else:
         cursor.execute(query)
 

@@ -12,7 +12,7 @@ from utilities import excel_defaults
 def build_value_range(start_row, val_col_idx, num_games):
     """ Builds a string containing the ranges of the cells containing the predicted value so that we can conditionally format them."""
 
-    excel_col = xl_col_to_name(val_col_idx + 2)
+    excel_col = xl_col_to_name(val_col_idx + 1)
 
     xl_range = ''
     row = int(start_row)
@@ -22,6 +22,16 @@ def build_value_range(start_row, val_col_idx, num_games):
 
     return xl_range.rstrip(',')
 
+class ExcelFormattingConstants:
+    def __init__(self):
+        self.BOLD_HEADERS = {'HeaderRange': {'bold': True,
+                                             'color': (132, 151, 176)}}
+        self.BOLD_INDEX = {'IndexRange': {'bold': True,
+                                          'color': (132, 151, 176)}}
+        self.BOLD_INDEX_AND_HEADERS = {'IndexRange': {'bold': True},
+                                                      #'color': (132, 151, 176)},
+                                       'HeaderRange': {'bold': True}}
+                                                       #'color': (132, 151, 176)}}
 class TableRange:
     """ Helper class used to manage the specific sections of a table. """
     def __init__(self, range):
@@ -131,7 +141,7 @@ class Table:
 
     def __get_index_range(self):
         if self.index:
-            self.IndexRange = ':'.join([self.TLC, self.BRC])
+            self.IndexRange = ':'.join([self.TLC, self.BLC])
         else:
             self.IndexRange = None
 
@@ -327,6 +337,7 @@ class SheetFormatter:
         # rule - percentile, min-max, above-below
         # ordered color scale
         # number of conditions - could be derived from number of colors
+        print('test')
 
 
         selection.api.FormatConditions.AddDatabar()
@@ -360,7 +371,7 @@ class SheetFormatter:
         # csc_neg = selection.api.FormatConditions(1).NegativeBarFormat(1)
         # csc_neg.Color = 255
         # csc_neg.TintAndShade = 0
-        # print('test')
+        print('test')
 
     def apply_sheet_formatting(self):
 
@@ -380,6 +391,8 @@ class SheetFormatter:
                     if self.range is None:
                         print('Must provide range for conditional formatting')
                         raise KeyError
+                    print('test')
+
                     selection = sheet.range(self.range)
                     self.__set_conditional_formatting_databar(selection, **self.conditional_format)
 

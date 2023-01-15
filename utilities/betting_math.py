@@ -1,4 +1,11 @@
 
+def line_payout(line, wager):
+    if line >= 100:
+        payout = (line / 100) * wager
+    else:
+        payout = (100 / abs(line)) * wager
+
+    return round(payout, 2)
 
 def ML_implied_prob(ml):
     """ Given a money line, returns an implied probability. """
@@ -54,3 +61,20 @@ def spread_from_power_ratings(power_ratings_df, home_team, away_team):
 
     return {home_team: home_spread,
             away_team: away_spread}
+
+
+def spread_from_power_ratings_2(power_rating, opp_power_rating, home: bool):
+
+    spread = power_rating - opp_power_rating + 2.1 # minus 2.1 for homefield advantage; want to make this dyanamic in the future for different stadiums
+
+    if home:
+        spread += 2.1
+        spread = round((spread * 2), 0) / 2  # 'PK' if round((spread * 2), 0) / 2 == 0 else round((spread * 2), 0) / 2 # Round to the nearest .5; PK for even spread
+        spread = flip_sign(spread)
+
+    else:
+        spread -= 2.1
+        spread = round((spread * 2), 0) / 2
+
+    return spread
+

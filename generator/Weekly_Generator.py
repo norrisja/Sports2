@@ -11,17 +11,18 @@ import os.path
 ### Author: @jnorris
 ############################################################
 
-filename = 'predictions_test.xlsx'
+week_num = 11
+
 starting_cell = 'A1'
+filename = f'week_{week_num}.xlsx'
 
 path = os.path.join(os.path.join(f"C:\\Users\\norri\\PycharmProjects\\Sports2\\data\\output\\predictions", filename))
 date = datetime.today().strftime('%m-%d-%Y')
 year = date.split('-')[-1]
 
 print(date)
-week_num = 15
 
-cal = FCal(season_start_date='09-09-2021').calendar
+cal = FCal(season_start_date='09-08-2022').calendar
 week_range = cal[week_num]
 
 predictor = Predictor(week_num, week_range)
@@ -36,7 +37,7 @@ excel.write_df(norris.analyzed_board, f'raw_predictions', 'A1', True, False)
 num_games = int(norris.analyzed_board.shape[0] / 2)
 
 games_df = norris.analyzed_board.reset_index()[['game',
-                                                # 'week',
+                                                #'week',
                                                 'abbreviation',
                    'team',
                    # 'source.full name',
@@ -57,14 +58,16 @@ games_df = norris.analyzed_board.reset_index()[['game',
                    # 'over / under american odds',
                    # 'implied_win_prob',
                    'predicted_spread',
-                   # 'predicted_win_prob',
+                   'predicted_win_prob',
                    'value']].copy()
 
 games_df = games_df.rename(columns={
                                   # 'source.full name': 'team',
                                   'spread spread / total': 'consensus_spread'})
 
-games_df.set_index(['week', 'game', 'abbreviation'], inplace=True)
+games_df.set_index([#'week',
+                    'game',
+                    'abbreviation'], inplace=True)
 
 val_range = build_value_range(starting_cell[1:], games_df.columns.get_loc('value'), num_games)
 
@@ -72,10 +75,9 @@ formatting = {'HeaderRange': {'bold': True,
                               'color': (132, 151, 176)},
               'DataRange': {'color': (172, 185, 202)}}
 
-
 for game in range(num_games):
-    game_df = games_df.xs(game, level=1, drop_level=True)
-    game_df = game_df.reset_index(level=0, drop=False)
+    game_df = games_df.xs(game, level=0, drop_level=True)
+    # game_df = game_df.reset_index(level=0, drop=False)
 
     start_col = starting_cell[0]
     start_row = starting_cell[1:]
@@ -87,7 +89,7 @@ for game in range(num_games):
 
 sf = SheetFormatter(f"C:\\Users\\norri\\PycharmProjects\\Sports2\\data\\output\\predictions\\{year}\\{filename}",
                     filename, f'Week {week_num}', val_range, conditional_format={'type': 'databars',
-                                                                                 'color_scale': ['']})
+                                                                                'color_scale': ['']})
 sf.apply_sheet_formatting()
 
 
